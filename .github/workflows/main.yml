@@ -28,7 +28,7 @@ jobs:
 
       - name: Configure & build
         run: |
-        ls
+          ls
           mkdir -p build
           cd build
           ls
