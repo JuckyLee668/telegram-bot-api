@@ -28,8 +28,10 @@ jobs:
 
       - name: Configure & build
         run: |
+        ls
           mkdir -p build
           cd build
+          ls
           cmake -DCMAKE_BUILD_TYPE=Release ..
           make -j$(nproc)
 
