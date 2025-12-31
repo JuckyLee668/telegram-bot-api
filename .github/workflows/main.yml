@@ -68,6 +68,7 @@ jobs:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
         run: |
+          cd build
           R2_ENDPOINT_URL="https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com"
           # 上传当前目录下所有文件到 R2 存储桶根目录
           for file in *; do
