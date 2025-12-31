@@ -1,0 +1,54 @@
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-and-package:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake pkg-config
+
+      - name: Set version
+        id: vars
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+          else
+            VERSION="git-${GITHUB_SHA::8}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Configure & build
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+          make -j$(nproc)
+
+      - name: Install to staged dir
+        run: |
+          cd build
+          rm -rf pkg
+          make DESTDIR="$(pwd)/pkg" install
+
+      - name: Pack tar.gz
+        run: |
+          cd build
+          ARCH=$(uname -m)
+          PKGNAME="telegram-bot-api-${{ steps.vars.outputs.version }}-linux-${ARCH}.tar.gz"
+          tar -C pkg -czf ../$PKGNAME .
+          echo "package=$PKGNAME" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: telegram-bot-api-tar
+          path: build/${{ steps.vars.outputs.package }}
