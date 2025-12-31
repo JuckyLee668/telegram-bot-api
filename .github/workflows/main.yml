@@ -48,15 +48,11 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=Release ..
           make -j$(nproc)
 
-      - name: Pack tar.gz
-        run: |
-          ARCH=$(uname -m)
-          PKGNAME="telegram-bot-api-${{ steps.vars.outputs.version }}-linux-${ARCH}.tar.gz"
-          tar -C pkg -czf ../$PKGNAME .
-          echo "package=$PKGNAME" >> "$GITHUB_OUTPUT"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        if: github.event_name == 'release'
         with:
-          name: telegram-bot-api-tar
-          path: build/${{ steps.vars.outputs.package }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ../telegram-bot-api
+          tag: ${{ github.ref }}
+          file_glob: true
