@@ -30,18 +30,16 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+          cmake -DCMAKE_BUILD_TYPE=Release ..
           make -j$(nproc)
 
       - name: Install to staged dir
         run: |
-          cd build
           rm -rf pkg
           make DESTDIR="$(pwd)/pkg" install
 
       - name: Pack tar.gz
         run: |
-          cd build
           ARCH=$(uname -m)
           PKGNAME="telegram-bot-api-${{ steps.vars.outputs.version }}-linux-${ARCH}.tar.gz"
           tar -C pkg -czf ../$PKGNAME .
