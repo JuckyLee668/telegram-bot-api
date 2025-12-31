@@ -53,6 +53,6 @@ jobs:
         if: github.event_name == 'release'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ../telegram-bot-api
+          file: telegram-bot-api
           tag: ${{ github.ref }}
           file_glob: true
