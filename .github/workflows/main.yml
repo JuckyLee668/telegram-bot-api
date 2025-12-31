@@ -48,11 +48,6 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=Release ..
           make -j$(nproc)
 
-      - name: Install to staged dir
-        run: |
-          rm -rf pkg
-          cmake --build . --target install
-
       - name: Pack tar.gz
         run: |
           ARCH=$(uname -m)
