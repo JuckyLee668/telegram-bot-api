@@ -51,7 +51,7 @@ jobs:
       - name: Install to staged dir
         run: |
           rm -rf pkg
-          make DESTDIR="$(pwd)/pkg" install
+          cmake --build . --target install
 
       - name: Pack tar.gz
         run: |
