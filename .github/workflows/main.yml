@@ -55,34 +55,13 @@ jobs:
           ls
           CXXFLAGS="-stdlib=libc++" CC=/usr/bin/clang-14 CXX=/usr/bin/clang++-14 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=.. ..
           cmake --build .
-          
-      - name: Configure AWS CLI for R2
-        env:
-          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
-        run: |
-          # 配置 AWS CLI 以使用 R2 的 S3 兼容端点
-          aws configure set aws_access_key_id $R2_ACCESS_KEY_ID
-          aws configure set aws_secret_access_key $R2_SECRET_ACCESS_KEY
-          aws configure set default.region auto
-          # R2 的 S3 API 端点格式
-          R2_ENDPOINT_URL="https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com"
-          echo "R2 Endpoint: $R2_ENDPOINT_URL"
-
-      - name: Upload Files to R2 Bucket
-        env:
-          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
-        run: |
           cd build
-          R2_ENDPOINT_URL="https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com"
-          # 上传当前目录下所有文件到 R2 存储桶根目录
-          for file in *; do
-            if [ -f "$file" ]; then
-              echo "Uploading $file to R2..."
-              aws s3 cp "$file" "s3://$R2_BUCKET_NAME/" --endpoint-url="$R2_ENDPOINT_URL"
-            fi
-          done
-          echo "✅ All files uploaded to R2."
+        - name: Upload binaries to release
+          uses: svenstaro/upload-release-action@v2
+          with:
+            repo_token: ${{ secrets.GITHUB_TOKEN }}
+            file: ../telegram-bot-api
+            asset_name: telegram-bot-api
+            tag: ${{ github.ref }}
+            overwrite: true
+            body: "This is new release"
