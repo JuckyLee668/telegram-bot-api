@@ -56,12 +56,12 @@ jobs:
           CXXFLAGS="-stdlib=libc++" CC=/usr/bin/clang-14 CXX=/usr/bin/clang++-14 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=.. ..
           cmake --build .
           cd build
-        - name: Upload binaries to release
-          uses: svenstaro/upload-release-action@v2
-          with:
-            repo_token: ${{ secrets.GITHUB_TOKEN }}
-            file: ../telegram-bot-api
-            asset_name: telegram-bot-api
-            tag: ${{ github.ref }}
-            overwrite: true
-            body: "This is new release"
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+           repo_token: ${{ secrets.GITHUB_TOKEN }}
+           file: ../telegram-bot-api
+           asset_name: telegram-bot-api
+           tag: ${{ github.ref }}
+           overwrite: true
+           body: "This is new release"
