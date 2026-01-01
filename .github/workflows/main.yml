@@ -1,3 +1,5 @@
+name: Build and Release
+
 on:
   push:
     tags:
@@ -7,35 +9,31 @@ on:
 jobs:
   build-and-package:
     runs-on: ubuntu-22.04
+    
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
           token: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Install build deps
         run: |
           sudo apt-get update
-          sudo apt-get upgrade
           sudo apt-get install -y \
             build-essential \
-            git \
             cmake \
-            g++ \
             zlib1g-dev \
             libssl-dev \
             libreadline-dev \
             libffi-dev \
             gperf \
             ninja-build \
-            pkg-config\
-            make\
-            git \
-            zlib1g-dev\
-            libssl-dev gperf cmake clang-14 \
+            pkg-config \
+            clang-14 \
             libc++-14-dev \
             libc++abi-14-dev
-
+      
       - name: Set version
         id: vars
         run: |
@@ -45,23 +43,73 @@ jobs:
             VERSION="git-${GITHUB_SHA::8}"
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
+      
       - name: Configure & build
         run: |
-          ls
           rm -rf build
           mkdir -p build
           cd build
-          ls
-          CXXFLAGS="-stdlib=libc++" CC=/usr/bin/clang-14 CXX=/usr/bin/clang++-14 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=.. ..
-          cmake --build .
-          cd build
-      - name: Upload binaries to release
-        uses: svenstaro/upload-release-action@v2
+          
+          CXXFLAGS="-stdlib=libc++" \
+          CC=/usr/bin/clang-14 \
+          CXX=/usr/bin/clang++-14 \
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+          
+          cmake --build . --target telegram-bot-api
+      
+      - name: Verify binary exists
+        run: |
+          if [ -f "build/telegram-bot-api" ]; then
+            echo "✅ Binary found"
+            file build/telegram-bot-api
+            ls -lh build/telegram-bot-api
+          else
+            echo "❌ Binary not found"
+            find . -name "*telegram*" -type f 2>/dev/null
+            exit 1
+          fi
+      
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-           repo_token: ${{ secrets.GITHUB_TOKEN }}
-           file: ../telegram-bot-api
-           asset_name: telegram-bot-api
-           tag: ${{ github.ref }}
-           overwrite: true
-           body: "This is new release"
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          body: |
+            ## Telegram Bot API
+            
+            Version: ${{ github.ref_name }}
+            
+            Automated release built with GitHub Actions.
+            
+            ### Changes
+            ${{ github.event.head_commit.message }}
+            
+            ### Build Info
+            - Commit: ${{ github.sha }}
+            - Built on: ${{ github.event.repository.updated_at }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload binary to Release
+        uses: actions/upload-release-asset@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/telegram-bot-api
+          asset_name: telegram-bot-api-${{ github.ref_name }}-linux-x86_64
+          asset_content_type: application/octet-stream
+      
+      - name: Debug info
+        if: always()
+        run: |
+          echo "Tag: ${{ github.ref }}"
+          echo "Tag name: ${{ github.ref_name }}"
+          echo "Is tag: ${{ startsWith(github.ref, 'refs/tags/') }}"
+          echo "Release URL: ${{ steps.create_release.outputs.upload_url }}"
