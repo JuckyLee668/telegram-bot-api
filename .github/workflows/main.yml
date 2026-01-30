@@ -32,9 +32,7 @@ jobs:
             pkg-config \
             clang-14 \
             libc++-14-dev \
-            libc++abi-14-dev
-            apt update
-            apt install -y \
+            libc++abi-14-dev \
             wget build-essential \
             gcc-aarch64-linux-gnu \
             libuuid1:arm64 libuuid-dev:arm64 \   
