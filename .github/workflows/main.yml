@@ -111,6 +111,8 @@ jobs:
         if: runner.os == 'Linux' && matrix.arch == 'x86_64'
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_STANDARD=17 \
+            -DCMAKE_C_STANDARD_REQUIRED=ON \
             -DCMAKE_C_COMPILER=/usr/bin/clang-14 \
             -DCMAKE_CXX_COMPILER=/usr/bin/clang++-14 \
             -DCMAKE_CXX_FLAGS="-stdlib=libc++"
@@ -119,20 +121,26 @@ jobs:
       - name: Configure & build (Linux arm64)
         if: runner.os == 'Linux' && matrix.arch == 'arm64'
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_STANDARD=17 \
+            -DCMAKE_C_STANDARD_REQUIRED=ON
           cmake --build build --target telegram-bot-api --parallel ${{ matrix.build_jobs }}
 
       - name: Configure & build (macOS)
         if: runner.os == 'macOS'
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_STANDARD=17 \
+            -DCMAKE_C_STANDARD_REQUIRED=ON
           cmake --build build --config Release --target telegram-bot-api --parallel ${{ matrix.build_jobs }}
 
       - name: Configure & build (Windows / MSYS2)
         if: runner.os == 'Windows'
         shell: msys2 {0}
         run: |
-          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_STANDARD=17 \
+            -DCMAKE_C_STANDARD_REQUIRED=ON
           cmake --build build --target telegram-bot-api --parallel ${{ matrix.build_jobs }}
 
       - name: Package artifact (Linux/macOS)
