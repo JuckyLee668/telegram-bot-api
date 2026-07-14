@@ -298,17 +298,20 @@ else
     exit 1
 fi
 
-# ========== 7. 配置 Caddy ==========
 echo -e "${GREEN}========== 7. 配置 Caddy 反向代理 ==========${NC}"
+
 mkdir -p "$(dirname "$CADDYFILE")"
 
-if grep -q "^\s*$DOMAIN\s*{" "$CADDYFILE" 2>/dev/null; then
+DOMAIN_REGEX=$(printf '%s\n' "$DOMAIN" | sed 's/[][(){}.^$*+?|\/]/\\&/g')
+
+if grep -qE "^[[:space:]]*${DOMAIN_REGEX}[[:space:]]*\{" "$CADDYFILE" 2>/dev/null; then
     print_ok "Caddyfile 中已存在 $DOMAIN 配置"
 else
-    if [ ! -f "$CADDYFILE" ]; then
-        echo "# Telegram Bot API" > "$CADDYFILE"
-    fi
-    echo -e "\n$DOMAIN { reverse_proxy localhost:$HTTP_PORT }" >> "$CADDYFILE"
+    [ -f "$CADDYFILE" ] || echo "# Telegram Bot API" > "$CADDYFILE"
+
+    printf "\n%s {\n    reverse_proxy localhost:%s\n}\n" \
+        "$DOMAIN" "$HTTP_PORT" >> "$CADDYFILE"
+
     print_ok "已添加配置到 $CADDYFILE"
 fi
 
