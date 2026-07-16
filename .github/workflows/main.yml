@@ -41,11 +41,6 @@ jobs:
             arch: arm64
             executable: telegram-bot-api
             artifact_suffix: linux-arm64
-          - os: windows-2022
-            platform: windows
-            arch: x86_64
-            executable: telegram-bot-api.exe
-            artifact_suffix: windows-x86_64
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -72,12 +67,6 @@ jobs:
             libc++-14-dev \
             libc++abi-14-dev
 
-      - name: Install Windows build dependencies (vcpkg)
-        if: runner.os == 'Windows'
-        run: |
-          # vcpkg is preinstalled on windows-2022 runner, VCPKG_ROOT is set
-          vcpkg install zlib gperf openssl
-
       - name: Configure & build (Linux x86_64)
         if: runner.os == 'Linux' && matrix.arch == 'x86_64'
         run: |
@@ -93,24 +82,17 @@ jobs:
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build --target telegram-bot-api --parallel
 
-      - name: Configure & build (Windows)
-        if: runner.os == 'Windows'
+      - name: Configure & build (non-Linux)
+        if: runner.os != 'Linux'
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release --target telegram-bot-api --parallel
 
       - name: Package artifact (Linux)
-        if: runner.os == 'Linux'
+        if: runner.os != 'Windows'
         run: |
           mkdir -p dist
           cp build/${{ matrix.executable }} dist/telegram-bot-api-${{ github.ref_name }}-${{ matrix.artifact_suffix }}
-
-      - name: Package artifact (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Copy-Item "build/Release/${{ matrix.executable }}" "dist/telegram-bot-api-${{ github.ref_name }}-${{ matrix.artifact_suffix }}.exe"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
